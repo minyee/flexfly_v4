@@ -138,7 +138,10 @@ namespace hw {
   assert(iter != switch_outport_connection_map_.end());
   int ports = (iter->second).size();
   path.vc = 0;
- 
+  
+  path.set_outport(routing_table_[src_switch_addr][dst_switch_addr]);
+  path.set_local_outport(routing_table_[src_switch_addr][dst_switch_addr]);
+  /*
   for (int i = 0; i < ports; i++) {
     if ((iter->second)[i]->dest_sid == routing_table_[src_switch_addr][dst_switch_addr]) {
       path.set_local_outport((iter->second)[i]->src_outport);
@@ -147,7 +150,7 @@ namespace hw {
       return;
     }
   }
-  
+  */
  };
 
  int flexfly_topology_simplified::get_output_port(int src_switch, int dst_switch) const {
@@ -315,9 +318,9 @@ bool flexfly_topology_simplified::switch_id_slot_filled(switch_id sid) const {
       return 1;
     } else { // different group but can reach either by 1 global and 1 local or 1 local and then 1 global
       if (group_connectivity_matrix_[src_group][dst_group] > 0) {
-        return 3;
+        return 1;
       } else {
-        return 5;
+        return 3;
       }
     }
   };
@@ -624,7 +627,14 @@ bool flexfly_topology_simplified::switch_id_slot_filled(switch_id sid) const {
         curr_id = parent_id;
         parent_id = parent[curr_id];
       }
-      routing_table_[src][i] = curr_id;
+      auto link_iter = switch_outport_connection_map_.find(src);
+      for (auto link : link_iter->second) {
+        if (link->dest_sid == curr_id) {
+          routing_table_[src][i] = link->src_outport;
+          break;
+        }
+      }
+      //routing_table_[src][i] = curr_id; // try to have routing table just use the src_outport instead
     }
   };
 
